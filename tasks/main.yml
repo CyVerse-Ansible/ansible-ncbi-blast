@@ -1,0 +1,67 @@
+---
+
+- name: Create MAKER home dir
+  file:
+    path: "{{ MAKER_HOME }}"
+    state: directory
+
+- name: Download NCBI BLAST
+  get_url:
+    url: "{{ NCBI_BLAST_URL }}"
+    dest: "{{ MAKER_HOME }}/ncbi-blast-2.6.0+-src.tar.gz"
+
+- name: Download NCBI BLAST patch
+  get_url:
+    url: "{{ RMBLAST_PATCH_URL }}"
+    dest: "{{ MAKER_HOME }}/isb-2.6.0+-changes-vers2.patch.gz"
+
+- name: Unzip NCBI BLAST
+  unarchive:
+    src: "{{ MAKER_HOME }}/ncbi-blast-2.6.0+-src.tar.gz"
+    dest: "{{ MAKER_HOME }}"
+    remote_src: yes
+
+- name: Unzip NCBI BLAST patch
+  command: "gunzip -f isb-2.6.0+-changes-vers2.patch.gz"
+  args:
+    chdir: "{{ MAKER_HOME }}"
+
+- name: Apply patch
+  shell: >
+    patch -p1 < ../isb-2.6.0+-changes-vers2.patch
+  args:
+    chdir: "{{ MAKER_HOME }}/ncbi-blast-2.6.0+-src"
+
+- name: Configure NCBI BLAST
+  command: "./configure --with-mt --prefix=/usr/local/rmblast --without-debug"
+  args:
+    chdir: "{{ MAKER_HOME }}/ncbi-blast-2.6.0+-src/c++"
+
+- name: Build NCBI BLAST
+  make:
+    chdir: "{{ MAKER_HOME }}/ncbi-blast-2.6.0+-src/c++"
+
+- name: Rename NCBI BLAST
+  command: >
+    mv {{ MAKER_HOME }}/ncbi-blast-2.6.0+-src {{ MAKER_HOME }}/ncbi-blast
+
+# - name: Install NCBI BLAST
+#   make:
+#     chdir: "{{ MAKER_HOME }}/ncbi-blast-2.6.0+-src/c++"
+#     target: install
+
+- name: Add BLAST to $PATH by adding line to bashrc
+  lineinfile:
+    path: "/home/{{ ATMOUSERNAME }}/.bashrc"
+    line: "export PATH=\"{{ MAKER_HOME }}/ncbi-blast/c++/ReleaseMT/bin:$PATH\""
+    state: present
+    insertafter: EOF
+
+- name: Cleanup
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ MAKER_HOME }}/ncbi-blast-2.6.0+-src.tar.gz"
+    - "{{ MAKER_HOME }}/isb-2.6.0+-changes-vers2.patch"
+    # - "{{ MAKER_HOME }}/ncbi-blast-2.6.0+-src"

@@ -1,0 +1,4 @@
+---
+MAKER_HOME: "/home/MAKER"
+NCBI_BLAST_URL: "ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.6.0/ncbi-blast-2.6.0+-src.tar.gz"
+RMBLAST_PATCH_URL: "http://www.repeatmasker.org/isb-2.6.0+-changes-vers2.patch.gz"
